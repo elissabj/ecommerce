@@ -18,13 +18,9 @@ const mysql = require("mysql2")
 const multer = require("multer")
 const nodemailer = require("nodemailer")
 const bodyParser = require("body-parser")
-
-
-const usuario = "";
-const correo = "";
-
         
 
+var currentMail=""
 
 initializePassport(passport)
 
@@ -42,6 +38,19 @@ app.use(passport.session())
 app.use(methodOverride("_method"))
 
 process.setMaxListeners(0);
+
+// Set up storage for multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null,  path.join(__dirname, 'uploads')) // specify upload directory
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)) // rename file
+    }
+});
+
+// Initialize multer upload middleware
+const upload = multer({ storage: storage });
 
 //MySQL connect
 const db = mysql.createConnection({
@@ -65,7 +74,7 @@ const db = mysql.createConnection({
 
 app.get('/register', checkNotAuthenticated, (req, res) => {
     res.render("register.ejs")
-})
+});
 
 app.post("/register", checkNotAuthenticated, async (req, res) => {
 
@@ -79,10 +88,11 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
 
         console.log("Pass con hash: ", hashedPassword, " de tipo: ", typeof hashedPassword);
 
-        usuario = req.body.name;
-        correo = req.body.email;
+        const usuario = req.body.name;
+        const correo = req.body.email;
         const contra = hashedPassword;
         
+        currentMail = req.body.email;
 
         const query = 'INSERT INTO usuarios (usuario, correo, contra, role) VALUES (?, ?, ?, ?)';
         const rol = 'comprador';
@@ -110,27 +120,28 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
         console.log(e);
         res.redirect("/register")
     }
-})
-
+});
 
 //Inicio de sesion
-
 app.get('/login', checkNotAuthenticated, (req, res) => {
     res.render("login.ejs")
-})
+});
 
-
-app.post("/login", checkNotAuthenticated, passport.authenticate("local", {
+app.post("/login", checkNotAuthenticated, (req, res, next) => {
+    currentMail = req.body.email; 
+    console.log(currentMail)
+    
+    passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/login",
     failureFlash: true
-}))
-
+})(req, res,next);
+});
 
 // Pantalla principal
 app.get('/', checkAuthenticated, (req, res) => {
     res.render("index.ejs", {name: req.user.name})
-})
+});
 
 // TODO CERRAR SESION
 app.delete("/logout", (req, res) => {
@@ -138,87 +149,65 @@ app.delete("/logout", (req, res) => {
         if (err) return next(err)
         res.redirect("/")
     })
-})
-
-//Manejo de imagenes 
-const subir_imagen = path.join(__dirname, 'public', 'images');
-
-if (!fs.existsSync(subir_imagen)) {
-  fs.mkdirSync(subir_imagen, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, subir_imagen);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
 });
-  
-const upload = multer({ storage: storage });
-
 
 // Productos
-
 //Obtener los productos
 app.get('/agregar-producto', checkAuthenticated, (req, res) => {
     res.render('agregar-producto.ejs'); // Renderiza la vista "subir producto"
-})
-
+});
 
 //Agregar los productos a la base de datos 
+app.post('/agregar-producto', upload.single('imagen'), checkAuthenticated, async (req, res) => {
 
-
-app.post('/agregar-producto', checkAuthenticated, (req, res) => {
-    const {nombre, precio, cantidad, categoria} = req.body;
+    const { nombre, precio, cantidad, categoria } = req.body;
     const imagen = req.file;
 
+        // Check if required fields are present
+    if (!nombre || !precio || !cantidad || !categoria || !imagen) {
+        return res.status(400).json({ success: false, message: 'Todos los campos son requeridos' });
+    }
 
-    console.log("Datos recibidos:", req.body);
-    console.log('Imagen recibida', imagen);
+    console.log("Correo:", currentMail);
 
-
-    //Renombrar imagen
-
-    const prev_nombre = `${imagen.filename}`;
-
-    const prefix = usuario;
-
-    console.log(prefix)
-    console.log(prev_nombre)
-
-    const currentImageName = prefix + prev_nombre;
-    const getVendor_id = -1
-
-    const getUser_ID = 'SELECT usuario_id from usuarios WHERE correo = ?';
-    db.execute(query,[correo], (err,results) => {
-        if (err) {
+        // Get user ID based on email
+    const getUserQuery = 'SELECT usuario_id FROM usuarios WHERE correo = ?';
+    var vendedorId  = 0
+    
+    db.execute(getUserQuery, [currentMail], (err,results) => {
+        if(err || results.length === 0){
             console.error('Error ejecutando la consulta:', err.message);
-            res.status(500).send({ success: false, message: 'Error en el servidor' });
-        }else if (results.length === 0){
-            res.status(400).send({ success: false, message: 'No se pudo obtener la informacion del vendedor', redirect: '/' });
+            return res.status(500).send({ success: false, message: 'Error en el servidor' });
         }
+        console.log(results)
+        console.log(results[0].usuario_id, typeof results[0].usuario_id)
+        vendedorId = results[0].usuario_id;
+        console.log(vendedorId)
 
-        getVendor_id = results;
-    })
+        console.log("Nombre del Producto:", nombre);
+        console.log("Precio:", precio);
+        console.log("Cantidad:", cantidad);
+        console.log("Categoria:", categoria);
+        console.log("Nombre del archivo de imagen:", imagen.filename);
+        console.log("Nombre del vendedor:", vendedorId);
 
-    const query = 'INSERT INTO productos (nombre, precio,cantidad,categoria, vendedor_id, nombre_imagen) VALUES (?,?,?,?,?,?)'
-    db.query(inserquerry, [nombre, precio,cantidad,categoria, getVendor_id, currentImageName], (err, results) => {
-        if (err) {
-            console.error('error al insertar en la bd', err);
-        }
+        const insertQuery = 'INSERT INTO productos (nombre, precio, cantidad, categoria_id, vendedor_id, nombre_imagen) VALUES (?, ?, ?, ?, ?, ?)';
+        db.execute(insertQuery, [nombre, precio, cantidad, categoria, vendedorId, imagen.filename], (err, results) => {
+            console.log(results)
+            if(err || results.length === 0){
+                console.error('Error ejecutando la consulta:', err.message);
+                return res.status(500).send({ success: false, message: 'Error en el servidor' });
+            }
+            // Respond with success message
+            console.log('Producto agregado correctamente');
+            return res.status(200).json({ success: true, message: 'Producto agregado correctamente' });
+        });
     });
-})
-
-
+});
 
 app.get('/carrito-compra', checkAuthenticated, (req, res) => {
 	res.render('carrito-compra.ejs');
-})
-
-
-
+});
 
 function checkAuthenticated(req, res, next){
     if(req.isAuthenticated()){
@@ -234,16 +223,4 @@ function checkNotAuthenticated(req, res, next){
     next()
 }
 
-
-
-
 app.listen(3001)
-
-
-/*
-AprovechR INICIO DE SESION
-vender_id = 
-
-select vendedor_id from usuarios where correo = ? 
-
-*/
