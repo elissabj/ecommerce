@@ -77,7 +77,3 @@ function getUserName(){
 }
 
 module.exports = initialize;
-/*module.exports = getUserMail;
-module.exports = getUserName;
-module.exports = getUserNumberId;
-*/
