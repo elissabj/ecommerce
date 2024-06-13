@@ -16,7 +16,7 @@ create table usuarios (
     usuario VARCHAR(50) NOT NULL UNIQUE,
     correo VARCHAR (100) NOT NULL UNIQUE,
     contra VARCHAR (255) NOT NULL, /*OPCIONAL*/
-    role ENUM('vendedor', 'comprador') NOT NULL,
+    role ENUM('vendedor', 'comprador') NOT NULL
 ); 
 
 
@@ -37,14 +37,13 @@ create table productos (
     nombre VARCHAR(250) NOT NULL,
     precio DECIMAL(10,2) NOT NULL,
     cantidad INT NOT NULL, 
-    nombre_imagen VARCHAR (250),
     categoria_id INT,
     vendedor_id INT, 
     FOREIGN KEY (categoria_id) REFERENCES categorias(categoria_id),
     FOREIGN KEY (vendedor_id) REFERENCES usuarios(usuario_id)
 );
 
----- ALTER TABLE productos ADD nombre_imagen VARCHAR (250);
+ALTER TABLE productos ADD nombre_imagen VARCHAR (250);
 
 /*
 Categoria
