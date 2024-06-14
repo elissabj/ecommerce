@@ -353,6 +353,16 @@ app.get('/carrito-compra', checkAuthenticated, (req, res) => {
 app.post('/carrito-compra', checkAuthenticated, (req, res) => {
     console.log(req.head, typeof req.head)
     console.log(req.body, typeof req.body)
+
+    const idProductoStr = req.body.producto_id;
+    console.log(idProductoStr, typeof idProductoStr);
+
+    idProducto = parseInt(idProductoStr);
+
+    console.log (idProducto);
+
+
+    res.render('carrito-compra.ejs');
 	
 });
 
