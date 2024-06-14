@@ -18,7 +18,8 @@ const mysql = require("mysql2")
 const multer = require("multer")
 const nodemailer = require("nodemailer")
 const bodyParser = require("body-parser")
-        
+
+const mysql_sync = require("sync-mysql")
 
 var currentMail=""
 
@@ -74,7 +75,7 @@ const db = mysql.createConnection({
 
 app.get('/register', checkNotAuthenticated, (req, res) => {
     res.render("register.ejs")
-});
+})
 
 app.post("/register", checkNotAuthenticated, async (req, res) => {
 
@@ -120,12 +121,15 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
         console.log(e);
         res.redirect("/register")
     }
-});
+})
+
 
 //Inicio de sesion
+
 app.get('/login', checkNotAuthenticated, (req, res) => {
     res.render("login.ejs")
-});
+})
+
 
 app.post("/login", checkNotAuthenticated, (req, res, next) => {
     currentMail = req.body.email; 
@@ -136,12 +140,13 @@ app.post("/login", checkNotAuthenticated, (req, res, next) => {
     failureRedirect: "/login",
     failureFlash: true
 })(req, res,next);
-});
+})
+
 
 // Pantalla principal
 app.get('/', checkAuthenticated, (req, res) => {
     res.render("index.ejs", {name: req.user.name})
-});
+})
 
 // TODO CERRAR SESION
 app.delete("/logout", (req, res) => {
@@ -149,16 +154,21 @@ app.delete("/logout", (req, res) => {
         if (err) return next(err)
         res.redirect("/")
     })
-});
+})
+
 
 // Productos
+
 //Obtener los productos
 app.get('/agregar-producto', checkAuthenticated, (req, res) => {
     res.render('agregar-producto.ejs'); // Renderiza la vista "subir producto"
-});
+})
+
 
 //Agregar los productos a la base de datos 
 app.post('/agregar-producto', upload.single('imagen'), checkAuthenticated, async (req, res) => {
+
+    console.log("Entro al POST");
 
     const { nombre, precio, cantidad, categoria } = req.body;
     const imagen = req.file;
@@ -205,9 +215,235 @@ app.post('/agregar-producto', upload.single('imagen'), checkAuthenticated, async
     });
 });
 
+
+//Endpoint para las categorias
+app.get('/dibujo-tecnico', checkAuthenticated, (req, res) => {
+    res.render('dibujo-tecnico.ejs');
+})
+
+app.get('/programacion', checkAuthenticated, (req, res) => {
+    res.render('dibujo-tecnico.ejs');
+})
+
+app.get('/mecatronica', checkAuthenticated, (req, res) => {
+    res.render('dibujo-tecnico.ejs');
+})
+
+app.get('/sistemas', checkAuthenticated, (req, res) => {
+    res.render('dibujo-tecnico.ejs');
+})
+
+
+
+
+//Este endpoint sirve para saber los productos por categoria en la base de datos
+app.get('/productos-categoria', checkAuthenticated, (req, res) => {
+
+    //console.log(req.query, " typeof: ", typeof req.query);
+
+    if(Object.keys(req.query).length === 0) return res.json({});
+
+    const categoria = req.query.categoria;
+
+    //console.log(categoria);
+
+    const categorias = ["dibujo", "mecatronica", "programacion", "sistemas"];
+    
+    let isValidParam = false;
+    for(it in categorias){
+        if(categorias[it] === categoria){
+            isValidParam = true;
+        }
+    }
+    
+    if(!isValidParam)
+        return res.json({});
+
+    const connection = new mysql_sync({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME 
+    });
+    
+    const queryForIdCategoria = 'SELECT categoria_id FROM categorias WHERE nombre = ?;' //dibujo
+    //const categoria = "dibujo";
+    
+    const resultsOfCategoria = connection.query(queryForIdCategoria, [categoria]);
+
+    console.log(resultsOfCategoria);
+
+    const idCategoria = resultsOfCategoria[0].categoria_id;
+
+    console.log(idCategoria, " type: ", typeof idCategoria);
+    //const queryForIdCategoria = 'SELECT categoria_id FROM categorias WHERE nombre = ?;' //dibujo
+
+    const queryForProducts = 'SELECT * FROM productos WHERE categoria_id = ?;'
+
+    const resultOfProducts = connection.query(queryForProducts, [idCategoria]);
+    
+    console.log(resultOfProducts);
+
+    const listOfProducts = resultOfProducts;
+
+    console.log("This is the for");
+
+    for(it in listOfProducts){
+        console.log(listOfProducts[it]);
+    }
+    
+    res.json(
+        listOfProducts
+    );
+
+    //const categoria = "dibujo";
+    //let categoria_id = 0;
+
+
+    // const getResultFromQuery = async () => {
+    //     const [result] = await db.execute(queryForIdCategoria, [categoria]);
+    //     return result;
+    // };
+
+
+    /*db.execute(queryForIdCategoria, [categoria], (err, results) => {
+        console.log(results);
+        console.log(results[0]);
+        console.log(results[0].categoria_id, " es de tipo: ", typeof results[0].categoria_id);
+        categoria_id = results[0].categoria_id;
+    });
+    let products = []
+    const queryForProducts = 'SELECT * FROM productos WHERE categoria_id = ?;'
+    db.execute(queryForIdCategoria, [categoria_id], (err, results) => {
+        console.log(results);
+        products = results;
+    });*/
+
+
+    // const result = await getResultFromQuery();
+    // console.log("Fuera del query: ", result);
+
+    // const str = "Soy el id: " + categoria_id + ", los products: " + products ;
+    // res.send(str);
+    /*
+    res.json({
+        id: 1,
+        name: "TEST JSON",
+        productos: [
+            {
+                id: 1,
+                nombre: "Carritos",
+                precio: "1000",
+                cantidadEnStock: "23",
+                nombre_imagen: "halo1.jpg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            },
+            {
+                id: 2,
+                nombre: "Carritos 2",
+                precio: "1020",
+                cantidadEnStock: "23",
+                nombre_imagen: "halo2.jpg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            },
+            {
+                id: 3,
+                nombre: "Carritos 3",
+                precio: "150",
+                cantidadEnStock: "23",
+                nombre_imagen: "imagen-1718310824894.jpeg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            },
+            {
+                id: 4,
+                nombre: "Carritos 4",
+                precio: "150",
+                cantidadEnStock: "23",
+                nombre_imagen: "halo3.jpg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            },
+            {
+                id: 5,
+                nombre: "Carritos 5",
+                precio: "1500",
+                cantidadEnStock: "23",
+                nombre_imagen: "halo3.jpg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            },
+            {
+                id: 2,
+                nombre: "Carritos 6",
+                precio: " 370",
+                cantidadEnStock: "23",
+                nombre_imagen: "halo3.jpg",
+                categoria_id: "Algo",
+                vendor_id: "Yo mero"
+            }
+        ]
+    });
+    */
+});
+
+
+
+//Endpoint para mostar las imagenes
+app.get('/showImage/:nombre', checkAuthenticated, (req, res) => {
+    const nombreImagen = req.params.nombre;
+
+    //console.log(id);
+    console.log(__dirname, './uploads');
+
+    let imageExists = false;
+
+    const files = fs.readdirSync('./uploads/');
+    console.log(files);
+
+    for (it in files){
+
+        console.log(files[it]);
+
+        if(files[it] === nombreImagen){
+            console.log(files[it], nombreImagen);
+            imageExists = true;
+        }
+    }
+
+    console.log(imageExists);
+
+    if(imageExists){
+        const pathOfImage = __dirname + '/uploads/' + nombreImagen;
+        console.log(pathOfImage, typeof pathOfImage);
+        res.sendFile(
+            pathOfImage
+        );
+        //res.send("Si esta la imagen")
+    } else {
+        const noImageRoute = __dirname + '/uploads/noImageFound.jpg'
+        res.sendFile(
+            noImageRoute
+        );
+        //res.send("No existe la imagen");
+    }
+
+});
+
+
+
+
+
+
+//Endpoint para lo relacionado para con el carrito de compra
 app.get('/carrito-compra', checkAuthenticated, (req, res) => {
 	res.render('carrito-compra.ejs');
-});
+})
+
+
+
 
 function checkAuthenticated(req, res, next){
     if(req.isAuthenticated()){
@@ -223,4 +459,16 @@ function checkNotAuthenticated(req, res, next){
     next()
 }
 
+
+
+
 app.listen(3001)
+
+
+/*
+AprovechR INICIO DE SESION
+vender_id = 
+
+select vendedor_id from usuarios where correo = ? 
+
+*/
