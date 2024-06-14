@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dibujo Tecnico</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <style>
         *{
             padding: 0;
@@ -28,7 +28,6 @@
             width: 100%;
             height: 2px;
             position: absolute;
-            background-color: black;
             top: 50%;
             z-index: -1;
         }
@@ -86,81 +85,161 @@
                 padding: 0;
             }
         }
+
+        .img-gallery {
+            width: 80%;
+            margin: 50px auto 50px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 30px;
+        }
+
+        .img-gallery > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .img-gallery img {
+            width: 100%;
+            height: 200px; /* Specify the desired height for the images */
+            object-fit: cover; /* Maintain aspect ratio */
+            cursor: pointer;
+            transition: 1s;
+        }
+
+        .img-gallery img:hover {
+            transform: scale(1.2);
+        }
+        .background-radial-gradient {
+            background-color: hsl(236, 243, 249);
+        }
+
+        #radius-shape-1 {
+            height: 220px;
+            width: 220px;
+            top: -60px;
+            left: -130px;
+            background: radial-gradient(#44006b, #ad1fff);
+            overflow: hidden;
+        }
+
+        #radius-shape-2 {
+            border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+            bottom: -60px;
+            right: -110px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(#44006b, #ad1fff);
+            overflow: hidden;
+        }
+
+        .bg-glass {
+            background-color: hsl(0, 0%, 100%) !important;
+            backdrop-filter: saturate(200%) blur(25px);
+        }
+
+        .navbar {
+            margin-bottom: 20px;
+        }
+
+        .navbar .button1, .navbar .logo {
+            margin: 10px;
+        }
+
+        .content-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px); /* Ajusta la altura para tener en cuenta la altura de la barra de navegación */
+        }
+
+        .card {
+            max-width: 500px;
+            width: 100%;
+        }
     </style>
 
 
 </head>
 <body>
+    
+    <nav class="navbar navbar-expand-lg navbar-light bg-glass fixed-top">
+        <div class="container-fluid">
+            <a href="/"><button class="btn btn-primary button1">Volver al inicio</button></a>
+            <a href="/carrito-compra"><button class="btn btn-primary">Carrito<i class="fas fa-shopping-cart"></i></button></a>
+            <a href="/conocenos"><img src="/images/logo.jpg" alt="Logo" class="logo"></a>
+        </div>
+    </nav>
+    
+    <section class="background-radial-gradient overflow-hidden">
+        <div class="container px-4 py-5 px-md-5 text-center text-lg-start my-5">
+            <div class="row gx-lg-5 align-items-center mb-5">
+                
 
-
-    <h1><span>Dibujo Tecnico</span></h1>
-
-    <div class="img-gallery" id="galleryDiv">
-        <img src= "https://images.wikidexcdn.net/mwuploads/wikidex/7/77/latest/20150621181250/Pikachu.png" onclick="openFulImg(this.src)" alt="">
-    </div>
+                    <h1 class="mb-4">Dibujo Tecnico</h1>
+                    <div class="img-gallery" id="galleryDiv">
+                    </div>
+                    
+            </div>
+        </div>           
+    </section>
+    
 
     <script src="script.js"></script>
     <script>
         const divParent = document.getElementById("galleryDiv");
-
+    
         async function showImagesInDOM() {
             const response = await fetch('http://localhost:3001/productos-categoria?categoria=dibujo');
-            console.log(response);
             const productos = await response.json();
-            console.log("Productos: ");
-            console.log(productos);
-
+    
             const URLforImages = "http://localhost:3001/showImage/";
-            for(it in productos){
-
-                console.log(productos[it]);
-                const producto = productos[it];
-                console.log("Descripcion del producto: ")
-                console.log(producto)
-
-                //Creamos el div de cada imagen
+            for (const producto of productos) {
                 const newDivForImage = document.createElement("div");
-
-
-                //Creamos cada imagen
+    
                 const newImageInsideDiv = document.createElement("img");
-                console.log(URLforImages + producto.nombre_imagen);
                 newImageInsideDiv.src = URLforImages + producto.nombre_imagen;
 
-                //Creamos la descipcion del producto
+                const newLabelProductIdDiv = document.createElement("p");
+                newLabelProductIdDiv.textContent = `Id del producto: ${producto.producto_id}`;
+    
                 const newLabelProductInsideDiv = document.createElement("p");
-                const productName = producto.nombre
-                let newParagraphLabel = document.createTextNode(productName);
-                newLabelProductInsideDiv.appendChild(newParagraphLabel);
-
-                //Precio del producto
+                newLabelProductInsideDiv.textContent = `Nombre: ${producto.nombre}`;
+    
                 const newLabelPriceInsideDiv = document.createElement("p");
-                const priceProduct = 'Precio: ' + producto.precio;
-                newParagraphLabel = document.createTextNode(priceProduct);
-                newLabelPriceInsideDiv.appendChild(newParagraphLabel);
-
-                //Hacemos el form
+                newLabelPriceInsideDiv.textContent = `Precio: ${producto.precio}`;
+    
+                const newLabelCantInsideDiv = document.createElement("p");
+                newLabelCantInsideDiv.textContent = `Cantidad disponible: ${producto.cantidad}`;
+    
                 const formInsideDiv = document.createElement("form");
-                formInsideDiv.action = '/agregar-producto';
+                formInsideDiv.action = '/carrito-compra';
                 formInsideDiv.method = 'POST';
+    
+                const newButtonOfSubmit = document.createElement("button");
+                newButtonOfSubmit.textContent = "Comprar producto";
+                formInsideDiv.appendChild(newButtonOfSubmit);
+    
+                // Add hidden input fields for product details
+                const hiddenId = document.createElement("input");
+                hiddenId.type = "hidden";
+                hiddenId.name = "producto_id";
+                hiddenId.value = producto.producto_id;
 
-                //Hacemos el boton del submit
-                const newButtonOfSummit = document.createElement("button");
-                const newButtonLabel = document.createTextNode("Agregar producto");
-                newButtonOfSummit.appendChild(newButtonLabel);
-
-                formInsideDiv.appendChild(newButtonOfSummit);
-
-                //Metemos en el div
+                
+                formInsideDiv.appendChild(hiddenId);
+    
                 newDivForImage.appendChild(newImageInsideDiv);
+                newDivForImage.appendChild(newLabelProductIdDiv);
                 newDivForImage.appendChild(newLabelProductInsideDiv);
                 newDivForImage.appendChild(newLabelPriceInsideDiv);
+                newDivForImage.appendChild(newLabelCantInsideDiv);
                 newDivForImage.appendChild(formInsideDiv);
-                
-                divParent.appendChild(newDivForImage); //Metemos el div en la galeria
+    
+                divParent.appendChild(newDivForImage);
             }
         }
-        console.log("Hola a todos");
+    
         showImagesInDOM();
     </script>
 </body>
