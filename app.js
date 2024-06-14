@@ -34,7 +34,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }))
-app.use(passport.initialize()) 
+app.use(passport.initialize())
 app.use(passport.session())
 app.use(methodOverride("_method"))
 
@@ -58,9 +58,9 @@ const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME    
+    database: process.env.DB_NAME
   });
-  
+
   db.connect((err) => {
     if (err) {
       console.error('Error conectando a la base de datos:', err.message);
@@ -80,11 +80,11 @@ app.get('/register', checkNotAuthenticated, (req, res) => {
 app.post("/register", checkNotAuthenticated, async (req, res) => {
 
     try {
-        
+
         console.log("Nombre: ", req.body.name, " de tipo: ", typeof req.body.name);
         console.log("Email: ", req.body.email, " de tipo: ", typeof req.body.email);
         console.log("Pass sin hash: ", req.body.password, " de tipo: ", typeof req.body.password);
-        
+
         const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
         console.log("Pass con hash: ", hashedPassword, " de tipo: ", typeof hashedPassword);
@@ -92,7 +92,7 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
         const usuario = req.body.name;
         const correo = req.body.email;
         const contra = hashedPassword;
-        
+
         currentMail = req.body.email;
 
         const query = 'INSERT INTO usuarios (usuario, correo, contra, role) VALUES (?, ?, ?, ?)';
@@ -109,14 +109,14 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
             }
           });
         users.push({
-            id: Date.now().toString(), 
+            id: Date.now().toString(),
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword,
         })
         console.log(users);
         res.redirect("/login")
-        
+
     } catch (e) {
         console.log(e);
         res.redirect("/register")
@@ -132,9 +132,9 @@ app.get('/login', checkNotAuthenticated, (req, res) => {
 
 
 app.post("/login", checkNotAuthenticated, (req, res, next) => {
-    currentMail = req.body.email; 
+    currentMail = req.body.email;
     console.log(currentMail)
-    
+
     passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/login",
@@ -165,7 +165,7 @@ app.get('/agregar-producto', checkAuthenticated, (req, res) => {
 })
 
 
-//Agregar los productos a la base de datos 
+//Agregar los productos a la base de datos
 app.post('/agregar-producto', upload.single('imagen'), checkAuthenticated, async (req, res) => {
 
     console.log("Entro al POST");
@@ -183,7 +183,7 @@ app.post('/agregar-producto', upload.single('imagen'), checkAuthenticated, async
         // Get user ID based on email
     const getUserQuery = 'SELECT usuario_id FROM usuarios WHERE correo = ?';
     var vendedorId  = 0
-    
+
     db.execute(getUserQuery, [currentMail], (err,results) => {
         if(err || results.length === 0){
             console.error('Error ejecutando la consulta:', err.message);
@@ -248,14 +248,14 @@ app.get('/productos-categoria', checkAuthenticated, (req, res) => {
     //console.log(categoria);
 
     const categorias = ["dibujo", "mecatronica", "programacion", "sistemas"];
-    
+
     let isValidParam = false;
     for(it in categorias){
         if(categorias[it] === categoria){
             isValidParam = true;
         }
     }
-    
+
     if(!isValidParam)
         return res.json({});
 
@@ -263,12 +263,12 @@ app.get('/productos-categoria', checkAuthenticated, (req, res) => {
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME 
+        database: process.env.DB_NAME
     });
-    
+
     const queryForIdCategoria = 'SELECT categoria_id FROM categorias WHERE nombre = ?;' //dibujo
     //const categoria = "dibujo";
-    
+
     const resultsOfCategoria = connection.query(queryForIdCategoria, [categoria]);
 
     console.log(resultsOfCategoria);
@@ -281,7 +281,7 @@ app.get('/productos-categoria', checkAuthenticated, (req, res) => {
     const queryForProducts = 'SELECT * FROM productos WHERE categoria_id = ?;'
 
     const resultOfProducts = connection.query(queryForProducts, [idCategoria]);
-    
+
     console.log(resultOfProducts);
 
     const listOfProducts = resultOfProducts;
@@ -291,7 +291,7 @@ app.get('/productos-categoria', checkAuthenticated, (req, res) => {
     for(it in listOfProducts){
         console.log(listOfProducts[it]);
     }
-    
+
     res.json(
         listOfProducts
     );
@@ -343,182 +343,27 @@ app.get('/showImage/:nombre', checkAuthenticated, (req, res) => {
 
 
 
-//Endpoint para saber que tiene dentro el carrito
-app.get('/productos-carrito-compra', checkAuthenticated, (req, res) => {
 
-    const connection = new mysql_sync({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-
-    const queryToCheckUserID = 'SELECT usuario_id FROM usuarios WHERE correo = ?';
-    const id_usuario_db = connection.query(queryToCheckUserID, [currentMail]);
-
-    console.log(id_usuario_db);
-
-    const id_usuario = id_usuario_db[0].usuario_id;
-
-    const queryCheckCarrito = 'SELECT * FROM carritos WHERE usuario_id = ?';
-    const id_carrito_db = connection.query(queryCheckCarrito, [id_usuario]);
-    const id_carrito = id_carrito_db[0].carrito_id;
-
-    console.log(currentMail, id_usuario, id_carrito);
-
-    const queryTraerDatosCarrito = 'SELECT * FROM elementos_carrito WHERE carrito_id = ?;';
-    //Ya con el carrito creado, añadimos el producto
-    const elementosCarrito = connection.query(queryTraerDatosCarrito, [id_carrito]);
-
-    console.log("elementos: ");
-    console.log(elementosCarrito);
-
-    res.send(
-        elementosCarrito
-    );
-
-})
 
 //Endpoint para lo relacionado para con el carrito de compra
 app.get('/carrito-compra', checkAuthenticated, (req, res) => {
 	res.render('carrito-compra.ejs');
 });
 
-
-//Agregar elementos al carrito
 app.post('/carrito-compra', checkAuthenticated, (req, res) => {
-    console.log(req.body, typeof req.body);
+    console.log(req.head, typeof req.head)
+    console.log(req.body, typeof req.body)
 
-    const id_producto = req.body.producto_id;
+    const idProductoStr = req.body.producto_id;
+    console.log(idProductoStr, typeof idProductoStr);
 
-    console.log(id_producto);
+    idProducto = parseInt(idProductoStr);
 
-    const queryForIdProducto = 'SELECT * FROM productos WHERE producto_id = ?;' //dibujo
-
-    const connection = new mysql_sync({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME
-    });
-
-    const resultsOfProduct = connection.query(queryForIdProducto, [id_producto]);
-
-    console.log("EL producto es: ", resultsOfProduct); //Aqui tengo el producto
-
-    const nuevoProducto = resultsOfProduct[0];
-
-    const queryToCheckUserID = 'SELECT usuario_id FROM usuarios WHERE correo = ?';
-
-    const id_usuario_db = connection.query(queryToCheckUserID, [currentMail]);
-
-    const id_usuario = id_usuario_db[0].usuario_id
-    console.log("ESTE ES EL ID: ", id_usuario);
-    //Meterlo en la base de datos
-
-    const queryCheckCarrito = 'SELECT * FROM carritos WHERE usuario_id = ?';
-
-    const existeCarrito = connection.query(queryCheckCarrito, [id_usuario]);
-
-    console.log("Esta es la query del carrito: ", existeCarrito);
+    console.log (idProducto);
 
 
+    res.render('carrito-compra.ejs');
 
-    if(existeCarrito.length === 0){
-
-        console.log("NO EXISTE EL CARRITO");
-        //Creamos el carrito y su elemento
-        const queryCreateCarrito = 'INSERT INTO carritos (usuario_id) VALUES (?);';
-        connection.query(queryCreateCarrito, [id_usuario]);
-        console.log("Carrito creado correctamente");
-
-        const queryCheckIdCarrito = 'SELECT carrito_id FROM carritos WHERE usuario_id = ?;'
-        const id_carrito_db = connection.query(queryCheckIdCarrito, [id_usuario]);
-
-        const carrito_id = id_carrito_db[0].carrito_id; //EL id del carrito del usuario actualmente que hizo login
-        console.log("Carrito id: ", carrito_id, " type: ", typeof carrito_id);
-
-        //Creamos sus elementos, vacio
-        const queryCreateElementosCarrito = 'INSERT INTO elementos_carrito(carrito_id, productos_comprados, precio_total) VALUES(?, \'[]\', 0);';
-        connection.query(queryCreateElementosCarrito, [carrito_id]);
-
-        console.log("Carrito de elementos creado correctamente");
-
-
-    } else {
-        console.log("SI EXISTE EL CARRITO");
-    }
-
-
-    const queryCheckIdCarrito = 'SELECT carrito_id FROM carritos WHERE usuario_id = ?;'
-    const id_carrito_db = connection.query(queryCheckIdCarrito, [id_usuario]);
-    carrito_id = id_carrito_db[0].carrito_id;
-
-    //TODO: Hacer validacion
-    const queryTraerDatosCarrito = 'SELECT * FROM elementos_carrito WHERE carrito_id = ?;';
-    //Ya con el carrito creado, añadimos el producto
-
-    const elementosCarrito = connection.query(queryTraerDatosCarrito, [carrito_id]);
-    //console.log("LOG: ", carrito_id, elementosCarrito);
-
-    console.log(elementosCarrito[0], nuevoProducto);
-
-    const elementoCarritoNuevo = elementosCarrito[0];
-
-
-    console.log(elementoCarritoNuevo, " - ", nuevoProducto);
-
-
-
-    //const nuevoProductosComprados = elementoCarritoNuevo.append(nuevoProducto);
-    //const nuevoPrecioTotal = 0;
-
-    const json_elemento_carrito = JSON.parse(elementoCarritoNuevo.productos_comprados);
-
-    const sizeArray = json_elemento_carrito.length;
-    json_elemento_carrito[sizeArray] = nuevoProducto;
-
-    console.log(json_elemento_carrito[sizeArray]);
-
-    console.log("Precio total: ", elementoCarritoNuevo.precio_total);
-    console.log("Precio nuevo producto: ", nuevoProducto.precio);
-    console.log("Cantidad nuevo producto: ", nuevoProducto.cantidad);
-
-    const nuevoPrecioTotal = elementoCarritoNuevo.precio_total + (nuevoProducto.precio * nuevoProducto.cantidad);
-
-    console.log(nuevoPrecioTotal, " type: ", typeof nuevoPrecioTotal);
-
-    const queryToUpdateCarrito = 'UPDATE elementos_carrito SET productos_comprados = ?, precio_total = ? WHERE carrito_id = ?;'
-    connection.query(queryToUpdateCarrito, [JSON.stringify(json_elemento_carrito), nuevoPrecioTotal, carrito_id]);
-
-    console.log("Se inserto correctamente");
-
-    //'UPDATE elementos_carrito SET productos_comprados='[{}]', precio_total=10 WHERE carrito_id = 3;'
-    //En elementos carrito tenemos lo que ya teniamos
-
-    /*
-    ALTER TABLE elementos_carrito ADD productos_comprados json;
-    ALTER TABLE elementos_carrito ADD precio_total DECIMAL(10,2) NOT NULL
-
-    mysql> ALTER TABLE elementos_carrito DROP COLUMN producto_id;
-    ERROR 1828 (HY000): Cannot drop column 'producto_id': needed in a foreign key constraint 'elementos_carrito_ibfk_2'
-
-    mysql> ALTER TABLE elementos_carrito DROP FOREIGN KEY elementos_carrito_ibfk_2;
-
-    ALTER TABLE elementos_carrito DROP COLUMN producto_id;
-
-    ALTER TABLE elementos_carrito DROP COLUMN cantidad;
-    */
-
-    //Checar si existe el carrito del usuario
-    //SI no existe se crea el carrito
-
-    //SELECT usuario_id FROM usuarios WHERE correo = 'e@g.com';
-    //'INSERT INTO elementos_carrito(carrito_id, productos_comprados,precio_total) VALUES(2, '{}', 100);';
-
-    console.log(currentMail)
-	
-    res.redirect('/');
 });
 
 
