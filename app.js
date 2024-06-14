@@ -222,15 +222,15 @@ app.get('/dibujo-tecnico', checkAuthenticated, (req, res) => {
 })
 
 app.get('/programacion', checkAuthenticated, (req, res) => {
-    res.render('dibujo-tecnico.ejs');
+    res.render('programacion.ejs');
 })
 
 app.get('/mecatronica', checkAuthenticated, (req, res) => {
-    res.render('dibujo-tecnico.ejs');
+    res.render('mecatronica.ejs');
 })
 
-app.get('/sistemas', checkAuthenticated, (req, res) => {
-    res.render('dibujo-tecnico.ejs');
+app.get('/sistemas-digitales', checkAuthenticated, (req, res) => {
+    res.render('sistemas_digitales.ejs');
 })
 
 
@@ -295,98 +295,6 @@ app.get('/productos-categoria', checkAuthenticated, (req, res) => {
     res.json(
         listOfProducts
     );
-
-    //const categoria = "dibujo";
-    //let categoria_id = 0;
-
-
-    // const getResultFromQuery = async () => {
-    //     const [result] = await db.execute(queryForIdCategoria, [categoria]);
-    //     return result;
-    // };
-
-
-    /*db.execute(queryForIdCategoria, [categoria], (err, results) => {
-        console.log(results);
-        console.log(results[0]);
-        console.log(results[0].categoria_id, " es de tipo: ", typeof results[0].categoria_id);
-        categoria_id = results[0].categoria_id;
-    });
-    let products = []
-    const queryForProducts = 'SELECT * FROM productos WHERE categoria_id = ?;'
-    db.execute(queryForIdCategoria, [categoria_id], (err, results) => {
-        console.log(results);
-        products = results;
-    });*/
-
-
-    // const result = await getResultFromQuery();
-    // console.log("Fuera del query: ", result);
-
-    // const str = "Soy el id: " + categoria_id + ", los products: " + products ;
-    // res.send(str);
-    /*
-    res.json({
-        id: 1,
-        name: "TEST JSON",
-        productos: [
-            {
-                id: 1,
-                nombre: "Carritos",
-                precio: "1000",
-                cantidadEnStock: "23",
-                nombre_imagen: "halo1.jpg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            },
-            {
-                id: 2,
-                nombre: "Carritos 2",
-                precio: "1020",
-                cantidadEnStock: "23",
-                nombre_imagen: "halo2.jpg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            },
-            {
-                id: 3,
-                nombre: "Carritos 3",
-                precio: "150",
-                cantidadEnStock: "23",
-                nombre_imagen: "imagen-1718310824894.jpeg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            },
-            {
-                id: 4,
-                nombre: "Carritos 4",
-                precio: "150",
-                cantidadEnStock: "23",
-                nombre_imagen: "halo3.jpg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            },
-            {
-                id: 5,
-                nombre: "Carritos 5",
-                precio: "1500",
-                cantidadEnStock: "23",
-                nombre_imagen: "halo3.jpg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            },
-            {
-                id: 2,
-                nombre: "Carritos 6",
-                precio: " 370",
-                cantidadEnStock: "23",
-                nombre_imagen: "halo3.jpg",
-                categoria_id: "Algo",
-                vendor_id: "Yo mero"
-            }
-        ]
-    });
-    */
 });
 
 
@@ -440,9 +348,13 @@ app.get('/showImage/:nombre', checkAuthenticated, (req, res) => {
 //Endpoint para lo relacionado para con el carrito de compra
 app.get('/carrito-compra', checkAuthenticated, (req, res) => {
 	res.render('carrito-compra.ejs');
-})
+});
 
-
+app.post('/carrito-compra', checkAuthenticated, (req, res) => {
+    console.log(req.head, typeof req.head)
+    console.log(req.body, typeof req.body)
+	
+});
 
 
 function checkAuthenticated(req, res, next){
