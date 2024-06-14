@@ -375,12 +375,3 @@ function checkNotAuthenticated(req, res, next){
 
 
 app.listen(3001)
-
-
-/*
-AprovechR INICIO DE SESION
-vender_id = 
-
-select vendedor_id from usuarios where correo = ? 
-
-*/
