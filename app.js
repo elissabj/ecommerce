@@ -493,29 +493,6 @@ app.post('/carrito-compra', checkAuthenticated, (req, res) => {
 
     console.log("Se inserto correctamente");
 
-    //'UPDATE elementos_carrito SET productos_comprados='[{}]', precio_total=10 WHERE carrito_id = 3;'
-    //En elementos carrito tenemos lo que ya teniamos
-
-    /*
-    ALTER TABLE elementos_carrito ADD productos_comprados json;
-    ALTER TABLE elementos_carrito ADD precio_total DECIMAL(10,2) NOT NULL
-
-    mysql> ALTER TABLE elementos_carrito DROP COLUMN producto_id;
-    ERROR 1828 (HY000): Cannot drop column 'producto_id': needed in a foreign key constraint 'elementos_carrito_ibfk_2'
-
-    mysql> ALTER TABLE elementos_carrito DROP FOREIGN KEY elementos_carrito_ibfk_2;
-
-    ALTER TABLE elementos_carrito DROP COLUMN producto_id;
-
-    ALTER TABLE elementos_carrito DROP COLUMN cantidad;
-    */
-
-    //Checar si existe el carrito del usuario
-    //SI no existe se crea el carrito
-
-    //SELECT usuario_id FROM usuarios WHERE correo = 'e@g.com';
-    //'INSERT INTO elementos_carrito(carrito_id, productos_comprados,precio_total) VALUES(2, '{}', 100);';
-
     console.log(currentMail)
 
     res.redirect('/');
